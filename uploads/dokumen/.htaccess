@@ -1,0 +1,7 @@
+# Dokumen karyawan bersifat rahasia: tidak boleh diakses langsung lewat URL.
+# Unduhan hanya lewat dokumen_unduh.php (memeriksa login & hak akses).
+Require all denied
+Options -Indexes -ExecCGI
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
