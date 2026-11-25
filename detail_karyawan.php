@@ -232,7 +232,7 @@ $info = static fn(string $label, ?string $nilai): string => '<div><dt>' . e($lab
                                 <button type="submit" class="tombol-ikon-kecil" title="Hapus foto" aria-label="Hapus foto"><?= ikon('silang') ?></button>
                             </form>
                         <?php endif; ?>
-                        <a class="tombol kecil utama" href="<?= e($daftarUrl) ?>?ubah=<?= $id ?>"><?= ikon('pena') ?>Ubah</a>
+                        <a class="tombol kecil utama" href="<?= e($daftarUrl) ?>?ubah=<?= $id ?>&amp;kembali=<?= e(rawurlencode($alamat)) ?>"><?= ikon('pena') ?>Ubah</a>
                     </div>
                 </div>
             </section>

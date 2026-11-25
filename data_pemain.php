@@ -11,6 +11,9 @@ wajib_admin();
 
 const POLA_TELEPON_ADMIN = '/^\+?[0-9][0-9\s\-()]{5,23}$/';
 $alamat = 'data_pemain.php';
+$idEdit = (int) ($_POST['id'] ?? $_GET['ubah'] ?? 0);
+$kembali = alamat_detail_kembali($_POST['kembali'] ?? $_GET['kembali'] ?? null, $idEdit);
+$parameterKembali = $kembali !== null ? '&kembali=' . rawurlencode($kembali) : '';
 
 function tanggal_ok(string $t): bool
 {
@@ -24,7 +27,7 @@ function tanggal_ok(string $t): bool
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_valid($_POST['csrf'] ?? null)) {
         flash_set('galat', 'Sesi formulir kedaluwarsa. Silakan coba lagi.');
-        kembali_ke($alamat);
+        kembali_ke($idEdit > 0 ? $alamat . '?ubah=' . $idEdit . $parameterKembali : $alamat);
     }
     $aksi = (string) ($_POST['aksi'] ?? '');
     try {
@@ -122,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($g) {
                 $_SESSION['form_pemain'] = ['galat' => $g, 'nilai' => $v + ['id' => $id]];
                 flash_set('galat', 'Periksa kembali isian data pemain.');
-                kembali_ke($alamat);
+                kembali_ke($alamat . '?ubah=' . $id . $parameterKembali);
             }
 
             [$labelPos, $lini] = KODE_POSISI[$v['posisi_kode']];
@@ -162,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash_set('sukses', 'Data ' . $v['nama_lengkap'] . ' diperbarui.');
             }
             // Pemain baru: kembali ke daftar agar kartu kata sandi sementara terlihat. Ubah: ke halaman detail.
-            kembali_ke(isset($sandi) ? $alamat : 'detail_karyawan.php?id=' . $id);
+            kembali_ke(isset($sandi) ? $alamat : ($kembali ?? 'detail_karyawan.php?id=' . $id));
         }
 
         if ($aksi === 'nonaktif') {
@@ -183,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         error_log('Data pemain gagal disimpan: ' . $ex->getMessage());
         flash_set('galat', 'Data belum dapat disimpan. Coba lagi nanti.');
-        kembali_ke($alamat);
+        kembali_ke($kembali ?? $alamat);
     }
     kembali_ke($alamat);
 }
@@ -379,11 +382,16 @@ foreach ($daftar as $p) {
                     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="aksi" value="simpan">
                     <input type="hidden" name="id" value="<?= (int) ($nilai['id'] ?? 0) ?>">
+                    <?php if ($kembali !== null): ?><input type="hidden" name="kembali" value="<?= e($kembali) ?>"><?php endif; ?>
                     <div class="modal-kepala">
                         <span class="ikon-judul"><?= ikon('orang') ?></span>
                         <div><h2 id="judulDialogPemain" data-judul-dialog><?= $baru ? 'Tambah pemain' : 'Ubah ' . e((string) ($nilai['nama_lengkap'] ?? 'pemain')) ?></h2>
                             <p>Data profil &amp; registrasi pemain. Kontrak dibuat terpisah di menu Kontrak.</p></div>
-                        <button type="button" class="tutup-toast" data-tutup-dialog aria-label="Tutup">&times;</button>
+                        <?php if ($kembali !== null && !$baru): ?>
+                            <a class="tutup-toast" style="text-decoration: none;" href="<?= e($kembali) ?>" aria-label="Kembali ke detail">&times;</a>
+                        <?php else: ?>
+                            <button type="button" class="tutup-toast" data-tutup-dialog aria-label="Tutup">&times;</button>
+                        <?php endif; ?>
                     </div>
                     <div class="modal-isi">
                         <div class="baris-2">
@@ -424,7 +432,11 @@ foreach ($daftar as $p) {
                         <p class="bantuan" data-hanya-baru<?= $baru ? '' : ' hidden' ?>>Kata sandi sementara dibuat otomatis dan ditampilkan sekali setelah disimpan.</p>
                     </div>
                     <div class="modal-kaki">
-                        <button type="button" class="tombol" data-tutup-dialog>Batal</button>
+                        <?php if ($kembali !== null && !$baru): ?>
+                            <a class="tombol" href="<?= e($kembali) ?>">Batal</a>
+                        <?php else: ?>
+                            <button type="button" class="tombol" data-tutup-dialog>Batal</button>
+                        <?php endif; ?>
                         <button type="submit" class="tombol utama"><?= ikon('tanda') ?>Simpan</button>
                     </div>
                 </form>

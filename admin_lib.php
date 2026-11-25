@@ -240,6 +240,36 @@ function isi_dialog(string $idDialog, array $data, string $judul = ''): string
         . ($judul !== '' ? ' data-judul="' . e($judul) . '"' : '');
 }
 
+/** Validasi tujuan kembali ke detail karyawan agar tidak bisa dipakai sebagai open redirect. */
+function alamat_detail_kembali(mixed $tujuan, int $id): ?string
+{
+    if (!is_string($tujuan) || $id < 1) {
+        return null;
+    }
+
+    $bagian = parse_url($tujuan);
+    if ($bagian === false || ($bagian['path'] ?? '') !== 'detail_karyawan.php'
+        || isset($bagian['scheme']) || isset($bagian['host']) || isset($bagian['port'])
+        || isset($bagian['user']) || isset($bagian['pass']) || isset($bagian['fragment'])) {
+        return null;
+    }
+
+    parse_str($bagian['query'] ?? '', $parameter);
+    if (array_diff(array_keys($parameter), ['id', 'tab'])
+        || !isset($parameter['id'])
+        || !is_string($parameter['id'])
+        || filter_var($parameter['id'], FILTER_VALIDATE_INT) !== $id) {
+        return null;
+    }
+
+    $tab = $parameter['tab'] ?? 'profil';
+    if (!is_string($tab) || !in_array($tab, ['profil', 'kontrak', 'dokumen', 'performa'], true)) {
+        return null;
+    }
+
+    return 'detail_karyawan.php?id=' . $id . ($tab !== 'profil' ? '&tab=' . $tab : '');
+}
+
 /** Kembali (PRG) ke halaman yang sama dengan parameter GET semula. */
 function kembali_ke(string $alamat): never
 {
