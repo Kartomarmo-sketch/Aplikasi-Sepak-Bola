@@ -14,8 +14,8 @@ if (is_logged_in()) {
 
 // ===== Tampilan: ganti di sini =====
 const NAMA_KLUB      = 'POHON BERINGIN FC';
-const GAMBAR_LOGO    = 'erasebg-transformed.png';     // ganti dengan logo klub, misal assets/logo.png
-const GAMBAR_STADION = 'med_width_gp10508-1.jpg';  // ganti dengan foto stadion, misal assets/stadion.jpg
+const GAMBAR_LOGO    = 'erasebg-transformed.png';
+const GAMBAR_STADION = 'med_width_gp10508-1.jpg';
 // ===================================
 
 const MAX_ATTEMPTS = 5;     // percobaan gagal sebelum dikunci
@@ -222,8 +222,10 @@ $csrf = csrf_token();
             <img class="logo" src="<?= e(GAMBAR_LOGO) ?>" alt="Logo <?= e(NAMA_KLUB) ?>">
 
             <div>
-                <h1 class="display-5 fw-bold mb-3"><?= e(NAMA_KLUB) ?></h1>
-
+                <h1 class="display-5 fw-bold"><?= e(NAMA_KLUB) ?></h1>
+                <h1 class="fw-bold mb-3" style="font-size: larger;">SIKLUB
+                    <span style="letter-spacing: -3px;">---------------------------------------------------------------------------------------</span>
+                </h1>
                 <ul class="fitur list-unstyled d-none d-lg-grid gap-3 mb-0">
                     <li class="d-flex align-items-center gap-3 fw-semibold">
                         <span class="lingkar"><i class="bi bi-file-earmark-text"></i></span>
@@ -303,7 +305,7 @@ $csrf = csrf_token();
                     </form>
 
                     <p class="text-center text-body-secondary small mt-4 mb-0">
-                        Lupa password? Hubungi admin klub.
+                        <a href="lupa_password.php">Lupa password?</a>
                     </p>
                 </div>
             </section>
