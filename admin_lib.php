@@ -270,6 +270,21 @@ function alamat_detail_kembali(mixed $tujuan, int $id): ?string
     return 'detail_karyawan.php?id=' . $id . ($tab !== 'profil' ? '&tab=' . $tab : '');
 }
 
+function pesan_galat_password_baru(string $password): string
+{
+    if (strlen($password) < 8) {
+        return 'Password baru minimal 8 karakter.';
+    }
+    if (strlen($password) > 72) {
+        return 'Password baru maksimal 72 byte.';
+    }
+    if (!preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+        return 'Password baru harus mengandung huruf dan angka.';
+    }
+
+    return '';
+}
+
 /** Kembali (PRG) ke halaman yang sama dengan parameter GET semula. */
 function kembali_ke(string $alamat): never
 {

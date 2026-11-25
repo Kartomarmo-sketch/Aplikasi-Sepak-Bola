@@ -575,6 +575,7 @@
             form.querySelectorAll('.pesan-salah').forEach(function (p) { p.remove(); });
             var baru = !data.id || String(data.id) === '0';
             form.querySelectorAll('[data-hanya-baru]').forEach(function (el) { el.hidden = !baru; });
+            form.querySelectorAll('[data-hanya-ubah]').forEach(function (el) { el.hidden = baru; });
             form.dispatchEvent(new Event('input'));
             form.dispatchEvent(new Event('change'));
         }

@@ -35,7 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       'tempat_lahir', 'kewarganegaraan', 'alamat', 'kontak_darurat_nama', 'kontak_darurat_hubungan', 'kontak_darurat_telepon'] as $k) {
                 $v[$k] = trim((string) ($_POST[$k] ?? ''));
             }
+            $passwordBaru = (string) ($_POST['password_baru'] ?? '');
+            $passwordUlang = (string) ($_POST['password_ulang'] ?? '');
             $g = [];
+            if ($id > 0 && ($passwordBaru !== '' || $passwordUlang !== '')) {
+                $galatPassword = pesan_galat_password_baru($passwordBaru);
+                if ($galatPassword !== '') {
+                    $g['password_baru'] = $galatPassword;
+                }
+                if ($passwordUlang !== $passwordBaru) {
+                    $g['password_ulang'] = 'Konfirmasi password tidak cocok.';
+                }
+            }
             foreach (['tempat_lahir' => 80, 'kewarganegaraan' => 60, 'alamat' => 255] as $k => $maks) {
                 if (mb_strlen($v[$k]) > $maks) {
                     $g[$k] = 'Maksimal ' . $maks . ' karakter.';
@@ -130,6 +141,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id = (int) $pdo->lastInsertId();
             } else {
                 $pdo->prepare('UPDATE users SET nama_lengkap = ? WHERE id = ?')->execute([$v['nama_lengkap'], $id]);
+                if ($passwordBaru !== '') {
+                    $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+                        ->execute([password_hash($passwordBaru, PASSWORD_DEFAULT), $id]);
+                }
             }
             $pdo->prepare('INSERT IGNORE INTO staf (user_id) VALUES (?)')->execute([$id]);
             $pdo->prepare('UPDATE staf SET nip = ?, jabatan = ?, jabatan_detail = ?, divisi = ?, atasan_id = ?, status_kerja = ?, tanggal_lahir = ?,
@@ -149,7 +164,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash_set('sukses', $v['nama_lengkap'] . ' ditambahkan sebagai staf.');
             } else {
                 catat_aktivitas('ubah', 'staf', $id, $v['nama_lengkap']);
-                flash_set('sukses', 'Data ' . $v['nama_lengkap'] . ' diperbarui.');
+                if ($passwordBaru !== '') {
+                    catat_aktivitas('ubah', 'users', $id, 'Admin mereset password staf');
+                }
+                flash_set('sukses', 'Data ' . $v['nama_lengkap'] . ($passwordBaru !== '' ? ' dan password diperbarui.' : ' diperbarui.'));
             }
             // Staf baru: kembali ke daftar (kartu kata sandi). Ubah: ke halaman detail.
             kembali_ke(isset($sandi) ? $alamat : ($kembali ?? 'detail_karyawan.php?id=' . $id));
@@ -423,6 +441,34 @@ function cetak_pohon(array $anak, int $induk, int $kedalaman = 0): string
                             <?= $medan('tempat_lahir', 'Tempat lahir', $teks('tempat_lahir', 'text', 'maxlength="80"')) ?>
                             <?= $medan('kewarganegaraan', 'Kewarganegaraan', $teks('kewarganegaraan', 'text', 'maxlength="60" placeholder="Indonesia"')) ?>
                             <?= $medan('alamat', 'Alamat', $teks('alamat', 'text', 'maxlength="255"')) ?>
+                        </div>
+                        <div data-hanya-ubah<?= $baru ? ' hidden' : '' ?>>
+                            <h3 class="pemisah-bagian">Password akun</h3>
+                            <div class="baris-2">
+                                <div class="medan<?= isset($galat['password_baru']) ? ' salah' : '' ?>">
+                                    <label for="passwordBaru">Password baru</label>
+                                    <div class="kolom berpassword">
+                                        <input type="password" id="passwordBaru" name="password_baru" autocomplete="new-password" maxlength="72"<?= isset($galat['password_baru']) ? ' aria-invalid="true" aria-describedby="galatPasswordBaru"' : '' ?>>
+                                        <button type="button" class="tampil-password" data-tampil-password aria-pressed="false" aria-label="Tampilkan password">
+                                            <svg class="ik mata-buka" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            <svg class="ik mata-tutup" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M3 3l18 18M10.600 6.100A10 10 0 0 1 12 5c6.400 0 10 7 10 7a17 17 0 0 1-3.200 4M6.600 6.600A17 17 0 0 0 2 12s3.600 7 10 7c1.700 0 3.200-.4 4.500-1M9.900 9.900a3 3 0 0 1 4.200 4.200"/></svg>
+                                        </button>
+                                    </div>
+                                    <?php if (isset($galat['password_baru'])): ?><p class="pesan-salah" id="galatPasswordBaru"><?= e($galat['password_baru']) ?></p><?php endif; ?>
+                                </div>
+                                <div class="medan<?= isset($galat['password_ulang']) ? ' salah' : '' ?>">
+                                    <label for="passwordUlang">Ulangi password baru</label>
+                                    <div class="kolom berpassword">
+                                        <input type="password" id="passwordUlang" name="password_ulang" autocomplete="new-password" maxlength="72"<?= isset($galat['password_ulang']) ? ' aria-invalid="true" aria-describedby="galatPasswordUlang"' : '' ?>>
+                                        <button type="button" class="tampil-password" data-tampil-password aria-pressed="false" aria-label="Tampilkan password">
+                                            <svg class="ik mata-buka" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            <svg class="ik mata-tutup" viewBox="0 0 24 24" aria-hidden="true" style="display:none"><path d="M3 3l18 18M10.600 6.100A10 10 0 0 1 12 5c6.400 0 10 7 10 7a17 17 0 0 1-3.200 4M6.600 6.600A17 17 0 0 0 2 12s3.600 7 10 7c1.700 0 3.200-.4 4.500-1M9.900 9.900a3 3 0 0 1 4.200 4.200"/></svg>
+                                        </button>
+                                    </div>
+                                    <?php if (isset($galat['password_ulang'])): ?><p class="pesan-salah" id="galatPasswordUlang"><?= e($galat['password_ulang']) ?></p><?php endif; ?>
+                                </div>
+                            </div>
+                            <p class="bantuan">Kosongkan jika tidak ingin mengganti password. Password lama tidak dapat ditampilkan karena tersimpan dengan hash.</p>
                         </div>
                         <h3 class="pemisah-bagian">Kontak darurat</h3>
                         <div class="baris-3">
